@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<title>Мессенджер</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; background:#f0f0f0; }
+.header { display: flex; justify-content: center; margin-top: 20px; }
+.tab { padding: 10px 20px; margin: 0 10px; background:#fff; border-radius: 5px; cursor:pointer; }
+.tab:hover { background:#ddd; }
+.container { max-width: 600px; margin: 30px auto; background:#fff; padding: 20px; border-radius:8px; }
+.hidden { display: none; }
+input[type=text], input[type=password] { padding:10px; margin-bottom:15px; border:1px solid #ccc; border-radius:4px; width:100%; box-sizing: border-box; }
+button { padding:10px; width:100%; background:#007bff; color:#fff; border:none; border-radius:4px; cursor:pointer; }
+button:hover { background:#0069d9; }
+.message { margin-bottom:10px; }
+#messages { height:300px; overflow-y:auto; border:1px solid #ccc; padding:10px; margin-bottom:10px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="tab" onclick="showTab('login')">Вход</div>
+  <div class="tab" onclick="showTab('register')">Регистрация</div>
+  <div class="tab" onclick="showTab('chat')">Мессенджер</div>
+</div>
+
+<!-- Форма входа -->
+<div id="login" class="container">
+  <h2>Вход</h2>
+  <div id="login-error" style="color:red;"></div>
+  <input type="text" id="login-user" placeholder="Логин" />
+  <input type="password" id="login-pass" placeholder="Пароль" />
+  <button onclick="login()">Войти</button>
+</div>
+
+<!-- Форма регистрации -->
+<div id="register" class="container hidden">
+  <h2>Регистрация</h2>
+  <div id="register-error" style="color:red;"></div>
+  <input type="text" id="register-user" placeholder="Логин" />
+  <input type="password" id="register-pass" placeholder="Пароль" />
+  <button onclick="register()">Зарегистрироваться</button>
+</div>
+
+<!-- Чат -->
+<div id="chat" class="container hidden">
+  <h3 style="text-align:center;">Чат</h3>
+  <div id="messages"></div>
+  <form id="message-form" onsubmit="sendMessage(event)">
+    <input type="text" id="message-input" placeholder="Введите сообщение..." required />
+    <button type="submit">Отправить</button>
+  </form>
+  <button onclick="logout()" style="margin-top:10px; background:#dc3545;">Выход</button>
+</div>
+
+<script>
+let users = {}; // хранение логинов и паролей
+let currentUser = null;
+let messages = [];
+
+// Показывать нужную вкладку
+function showTab(tab) {
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('register').classList.add('hidden');
+  document.getElementById('chat').classList.add('hidden');
+
+  if (tab === 'login') {
+    document.getElementById('login').classList.remove('hidden');
+  } else if (tab === 'register') {
+    document.getElementById('register').classList.remove('hidden');
+  } else if (tab === 'chat') {
+    if (currentUser) {
+      document.getElementById('chat').classList.remove('hidden');
+      loadMessages();
+    } else {
+      alert('Пожалуйста, войдите или зарегистрируйтесь.');
+      showTab('login');
+    }
+  }
+}
+
+// Регистрация
+function register() {
+  const user = document.getElementById('register-user').value.trim();
+  const pass = document.getElementById('register-pass').value.trim();
+  if (!user || !pass) {
+    document.getElementById('register-error').innerText = 'Заполните все поля.';
+    return;
+  }
+  if (users[user]) {
+    document.getElementById('register-error').innerText = 'Пользователь уже существует.';
+    return;
+  }
+  users[user] = pass; // храним пароль в чистом виде для простоты
+  alert('Регистрация прошла успешно! Войдите.');
+  document.getElementById('register-user').value = '';
+  document.getElementById('register-pass').value = '';
+  document.getElementById('register-error').innerText = '';
+  showTab('login');
+}
+
+// Вход
+function login() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value.trim();
+  if (users[user] && users[user] === pass) {
+    currentUser = user;
+    document.getElementById('login-user').value = '';
+    document.getElementById('login-pass').value = '';
+    document.getElementById('login-error').innerText = '';
+    showTab('chat');
+  } else {
+    document.getElementById('login-error').innerText = 'Неверный логин или пароль.';
+  }
+}
+
+// Выход
+function logout() {
+  currentUser = null;
+  showTab('login');
+}
+
+// Отправка сообщения
+function sendMessage(e) {
+  e.preventDefault();
+  const msgText = document.getElementById('message-input').value.trim();
+  if (msgText && currentUser) {
+    const time = new Date().toLocaleTimeString();
+    const msg = { user: currentUser, text: msgText, time: time };
+    messages.push(msg);
+    document.getElementById('message-input').value = '';
+    loadMessages();
+  }
+}
+
+// Загрузка сообщений
+function loadMessages() {
+  const chatDiv = document.getElementById('messages');
+  chatDiv.innerHTML = '';
+  messages.forEach(msg => {
+    const div = document.createElement('div');
+    div.className = 'message';
+    div.innerHTML = `<strong>[${msg.time}] ${msg.user}:</strong> ${msg.text}`;
+    chatDiv.appendChild(div);
+  });
+  // автоматическая прокрутка
+  chatDiv.scrollTop = chatDiv.scrollHeight;
+}
+</script>
+
+</body>
+</html>
